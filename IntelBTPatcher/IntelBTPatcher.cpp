@@ -204,7 +204,7 @@ IOReturn CIntelBTPatcher::newHostDeviceRequest(void *that, IOService *provider, 
                 descriptor->complete(kIODirectionOut);
         }
         hdr = (HciCommandHdr *)hciBuf;
-        if (hdr->opcode == HCI_OP_LE_SET_SCAN_PARAM && hdr->data[5] == 0x1) {
+        if (hdr->opcode == HCI_OP_LE_SET_SCAN_PARAM) {
             if (!_randomAddressInit) {
                 randomAddressRequest.bmRequestType = makeDeviceRequestbmRequestType(kRequestDirectionOut, kRequestTypeClass, kRequestRecipientInterface);
                 randomAddressRequest.bRequest = 0xE0;
@@ -214,9 +214,9 @@ IOReturn CIntelBTPatcher::newHostDeviceRequest(void *that, IOService *provider, 
                 length = 9;
                 if (writeHCIDescriptor == nullptr)
                     writeHCIDescriptor = IOBufferMemoryDescriptor::withBytes(randomAddressHci, 9, kIODirectionInOut);
-                writeHCIDescriptor->prepare(kIODirectionInOut);
+                writeHCIDescriptor->prepare(kIODirectionOut);
                 IOReturn ret = FunctionCast(newHostDeviceRequest, callbackIBTPatcher->oldHostDeviceRequest)(that, provider, randomAddressRequest, nullptr, writeHCIDescriptor, length, nullptr, timeout);
-                writeHCIDescriptor->complete(kIODirectionInOut);
+                writeHCIDescriptor->complete();
                 const char *randAddressDump = _hexDumpHCIData((uint8_t *)randomAddressHci, 9);
                 if (randAddressDump) {
                     SYSLOG(DRV_NAME, "[PATCH] Sending Random Address HCI %d %s", ret, randAddressDump);
